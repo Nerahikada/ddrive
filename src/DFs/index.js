@@ -41,13 +41,23 @@ class DiscordFileSystem {
         }
     }
 
-    get webhookURL() {
-        const webhookURL = this.webhooks[this.lastWbIdx]
-        this.lastWbIdx = this.lastWbIdx + 1 >= this.webhooks.length
-            ? 0
-            : this.lastWbIdx + 1
+    static parseWebhookURL(url) {
+        const match = url.match(/webhooks\/(\d+)\/([A-Za-z0-9_-]+)/)
+        if (!match) throw new Error(`Invalid webhook URL: ${url}`)
+        return { id: match[1], token: match[2] }
+    }
 
-        return webhookURL.replace('https://discord.com/api', '')
+    static isURLExpired(url) {
+        try {
+            const parsed = new URL(url)
+            const ex = parsed.searchParams.get('ex')
+            if (!ex) return false
+            const expiresAt = parseInt(ex, 16)
+            const now = Math.floor(Date.now() / 1000)
+            return now >= expiresAt - 300
+        } catch {
+            return false
+        }
     }
 
     /**
@@ -91,11 +101,32 @@ class DiscordFileSystem {
     /**
      * @description Upload single file to discord
      * @param file {Object}
-     * @returns {Promise<unknown>}
+     * @returns {Promise<{response: Object, webhookId: string, webhookToken: string}>}
      * @private
      */
-    _uploadFile(file) {
-        return this.rest.post(this.webhookURL, { files: [file], auth: false })
+    async _uploadFile(file) {
+        const rawURL = this.webhooks[this.lastWbIdx]
+        this.lastWbIdx = (this.lastWbIdx + 1) % this.webhooks.length
+        const apiPath = rawURL.replace('https://discord.com/api', '')
+        const { id: webhookId, token: webhookToken } = DiscordFileSystem.parseWebhookURL(rawURL)
+        const response = await this.rest.post(apiPath, { files: [file], auth: false })
+        return { response, webhookId, webhookToken }
+    }
+
+    /**
+     * @description Refresh an expired attachment URL via webhook message API
+     * @param webhookId {string}
+     * @param webhookToken {string}
+     * @param messageId {string}
+     * @returns {Promise<string>}
+     */
+    async refreshURL(webhookId, webhookToken, messageId) {
+        const path = `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`
+        const message = await this.rest.get(path, { auth: false })
+        if (!message.attachments || !message.attachments.length) {
+            throw new Error(`No attachments found in message ${messageId}`)
+        }
+        return message.attachments[0].url
     }
 
     /**
@@ -106,10 +137,18 @@ class DiscordFileSystem {
      */
     async read(stream, parts) {
         for (const part of parts) {
+            let { url } = part
+            if (DiscordFileSystem.isURLExpired(url) && part.messageId && part.webhookId && part.webhookToken) {
+                try {
+                    url = await this.refreshURL(part.webhookId, part.webhookToken, part.messageId)
+                } catch (err) {
+                    throw new Error(`Failed to refresh expired URL for message ${part.messageId}: ${err.message}`)
+                }
+            }
             let headers = {}
             if (part.start || part.end) headers = { Range: `bytes=${part.start || 0}-${part.end || ''}` }
             await new Promise((resolve, reject) => {
-                https.get(part.url, { headers }, (res) => {
+                https.get(url, { headers }, (res) => {
                     // Handle incoming data chunks from discord server
                     const handleData = async (data) => {
                         // https://nodejs.org/docs/latest-v16.x/api/stream.html#writablewritechunk-encoding-callback
@@ -152,9 +191,13 @@ class DiscordFileSystem {
             if (this.secret)({ iv, encrypted } = this._encrypt(this.secret, data))
             // Upload file to discord
             const part = { name: uuid(), data: encrypted || data }
-            const { attachments: [attachment] } = await this._uploadFile(part)
+            const { response, webhookId, webhookToken } = await this._uploadFile(part)
+            const { attachments: [attachment] } = response
             // Push part object into array and return later
-            parts[chunkCount] = { url: attachment.url, size: attachment.size, iv }
+            parts[chunkCount] = {
+                url: attachment.url, size: attachment.size, iv,
+                messageId: response.id, webhookId, webhookToken,
+            }
         }
 
         return new Promise((resolve, reject) => {

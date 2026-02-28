@@ -33,10 +33,12 @@ function makeid(length) {
 }
 
 function sort(arr, key) {
+    if (key === 'createdAt') {
+        return arr.sort((b, a) => new Date(a[key]) - new Date(b[key]))
+    }
     return arr.sort((a, b) => {
         if (a[key] < b[key]) return -1
         if (a[key] > b[key]) return 1
-
         return 0
     })
 }
