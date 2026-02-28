@@ -53,24 +53,29 @@ module.exports = async (req, reply) => {
         // Handle Range requests
         const { range } = req.headers
         const parsedRange = rangeParser(file.size, range)
+
+        reply.hijack()
+
         if (range && parsedRange !== -1) {
             const { start, end } = parsedRange
-            reply.hijack()
             reply.raw.writeHead(206, {
                 ...resHeaders,
                 'Content-Length': end - start + 1,
                 'Content-Range': `bytes ${start}-${end}/${file.size}`,
             })
             file.parts = rangedParts(file.parts, start, end)
-            await req.dfs.read(reply.raw, file.parts)
-            return
+        } else {
+            reply.raw.writeHead(200, resHeaders)
         }
 
-        reply.hijack()
-        reply.raw.writeHead(200, resHeaders)
         await req.dfs.read(reply.raw, file.parts)
     } catch (err) {
         req.log.error(err)
-        sendS3Error(reply, 'InternalError')
+        // If headers already sent (hijacked), just close the socket
+        if (reply.raw.headersSent) {
+            reply.raw.destroy()
+        } else {
+            sendS3Error(reply, 'InternalError')
+        }
     }
 }
