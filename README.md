@@ -27,7 +27,7 @@ https://user-images.githubusercontent.com/59018146/167635903-48cdace0-c383-4e7d-
 All uploads and downloads are proxied through the ddrive server. This means your server's bandwidth usage is roughly **twice** the actual file size (once for the transfer between the server and Discord, and once between the server and the user). Keep this in mind if your VPS has a monthly bandwidth cap.
 
 ### Requirements
-- Docker / Podman (recommended), or Node.js v22+
+- Docker / Podman, or Node.js v22+
 - PostgreSQL
 - Discord Webhook URLs
 
