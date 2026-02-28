@@ -17,6 +17,7 @@ https://user-images.githubusercontent.com/59018146/167635903-48cdace0-c383-4e7d-
 - Theoretically unlimited file size, thanks to splitting the file in 10MB chunks using nodejs streams API.
 - Simple yet robust HTTP front end
 - Rest API with OpenAPI 3.1 specifications.
+- **S3-compatible API** — use `aws s3 cp/ls/rm` or any S3 client to manage files directly.
 - Tested with storing 4000 GB of data on single discord channel (With max file size of 16GB).
 - Supports basic auth with read only public access to panel.
 - Optional AES-256 encryption for files uploaded to Discord
@@ -69,6 +70,29 @@ PUBLIC_ACCESS=READ_ONLY_FILE # If you want to give read only access to panel or 
 
 UPLOAD_CONCURRENCY=3 # ddrive will upload this many chunks in parallel to discord. If you have fast internet increasing it will significantly increase performance at cost of cpu/disk usage
 
+# S3 Compatible API (set both keys to enable)
+S3_ACCESS_KEY_ID=myaccesskey       # AWS-style access key for S3 authentication
+S3_SECRET_ACCESS_KEY=mysecretkey   # AWS-style secret key for S3 authentication
+S3_BUCKET=ddrive                   # Bucket name (used as URL path prefix, default: ddrive)
+```
+
+### S3-Compatible API
+
+When `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` are set, ddrive exposes an S3-compatible API at `/{bucket}` alongside the existing REST API and web UI. This lets you use standard S3 tools like `aws-cli`, Cyberduck, or any S3-compatible client.
+
+**Supported operations:** PutObject, GetObject, HeadObject, DeleteObject, ListObjectsV2, HeadBucket
+
+```shell
+# Configure aws-cli
+aws configure set aws_access_key_id myaccesskey
+aws configure set aws_secret_access_key mysecretkey
+aws configure set default.region us-east-1
+
+# Upload, list, download, delete
+aws --endpoint-url http://localhost:3000 s3 cp myfile.txt s3://ddrive/myfile.txt
+aws --endpoint-url http://localhost:3000 s3 ls s3://ddrive/
+aws --endpoint-url http://localhost:3000 s3 cp s3://ddrive/myfile.txt downloaded.txt
+aws --endpoint-url http://localhost:3000 s3 rm s3://ddrive/myfile.txt
 ```
 
 Feel free to create [new issue](https://github.com/forscht/ddrive/issues/new) if it's not working for you or need any help.
