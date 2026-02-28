@@ -53,37 +53,9 @@ https://discord.com/api/webhooks/1234567890/abcdef...
 https://discord.com/api/webhooks/0987654321/fedcba...
 ```
 
-### Config variables explanation
-```shell
-# config/.env
+### Config variables
 
-# Required params
-DATABASE_URL= # Database URL of postgres with valid postgres uri
-
-WEBHOOKS={url1},{url2} # Webhook urls separated by ","
-
-# Optional params
-PORT=3000 # HTTP Port where ddrive panel will start running
-
-REQUEST_TIMEOUT=60000 # Time in ms after which ddrive will abort request to discord api server. Set it high if you have very slow internet
-
-CHUNK_SIZE=10165824 # ~10MB max. Discord webhooks limit uploads to 10MB per request
-
-SECRET=someverysecuresecret # If you set this every files on discord will be stored using strong encryption, but it will cause significantly high cpu usage, so don't use it unless you're storing important stuff
-
-AUTH=admin:admin # Username password separated by ":". If you set this panel will ask for username password before access
-
-PUBLIC_ACCESS=READ_ONLY_FILE # If you want to give read only access to panel or file use this option. Check below for valid options.
-                             # READ_ONLY_FILE - User will be only access download links of file and not panel
-                             # READ_ONLY_PANEL - User will be able to browse the panel for files/directories but won't be able to upload/delete/rename any file/folder.
-
-UPLOAD_CONCURRENCY=3 # ddrive will upload this many chunks in parallel to discord. If you have fast internet increasing it will significantly increase performance at cost of cpu/disk usage
-
-# S3 Compatible API (set both keys to enable)
-S3_ACCESS_KEY_ID=myaccesskey       # AWS-style access key for S3 authentication
-S3_SECRET_ACCESS_KEY=mysecretkey   # AWS-style secret key for S3 authentication
-S3_BUCKET=ddrive                   # Bucket name (used as URL path prefix, default: ddrive)
-```
+See [`config/.env_sample`](config/.env_sample) for all available options with defaults and descriptions.
 
 ### S3-Compatible API
 
