@@ -71,39 +71,4 @@ UPLOAD_CONCURRENCY=3 # ddrive will upload this many chunks in parallel to discor
 
 ```
 
-## API Usage
-```javascript
-const { DFs, HttpServer } = require('@forscht/ddrive')
-
-const DFsConfig = {
-  chunkSize: 10165824,
-  webhooks: 'webhookURL1,webhookURL2',
-  secret: 'somerandomsecret',
-  maxConcurrency: 3, // UPLOAD_CONCURRENCY
-  restOpts: {
-    timeout: '60000',
-  },
-}
-
-const httpConfig = {
-  authOpts: {
-    auth: { user: 'admin', pass: 'admin' },
-    publicAccess: 'READ_ONLY_FILE', // or 'READ_ONLY_PANEL'
-  },
-  port: 8080,
-}
-
-const run = async () => {
-  // Create DFs Instance
-  const dfs = new DFs(DFsConfig)
-  // Create HTTP Server instance
-  const httpServer = HttpServer(dfs, httpConfig)
-
-  return httpServer.listen({ host: '0.0.0.0', port: httpConfig.port })
-}
-
-run().then()
-
-```
-
 Feel free to create [new issue](https://github.com/forscht/ddrive/issues/new) if it's not working for you or need any help.
