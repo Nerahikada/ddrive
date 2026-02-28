@@ -8,6 +8,7 @@ const commonSchemas = require('./api/constants/commonSchemas')
 const directoryRoutes = require('./api/routes/directory/routes')
 const fileRoutes = require('./api/routes/file/routes')
 const Auth = require('./api/services/auth')
+const s3Routes = require('./s3/routes')
 
 module.exports = (dfs, opts) => {
     // Create fastify instance
@@ -27,6 +28,16 @@ module.exports = (dfs, opts) => {
             fastify.register(directoryRoutes, { prefix: '/api' })
             fastify.register(fileRoutes, { prefix: '/api' })
         })
+
+    // Register S3 routes if credentials are configured
+    if (opts.s3) {
+        fastify.register(s3Routes, {
+            prefix: `/${opts.s3.bucket}`,
+            bucket: opts.s3.bucket,
+            accessKeyId: opts.s3.accessKeyId,
+            secretAccessKey: opts.s3.secretAccessKey,
+        })
+    }
 
     // Attach dfs to every req
     fastify.addHook('onRequest', async (req) => { req.dfs = dfs })

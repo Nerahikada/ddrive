@@ -15,6 +15,22 @@ const loadWebhooks = () => {
     return webhookFileBuffer.toString().split('\n')
 }
 
+const S3Config = () => {
+    const {
+        S3_ACCESS_KEY_ID,
+        S3_SECRET_ACCESS_KEY,
+        S3_BUCKET = 'ddrive',
+    } = process.env
+
+    if (!S3_ACCESS_KEY_ID || !S3_SECRET_ACCESS_KEY) return null
+
+    return {
+        accessKeyId: S3_ACCESS_KEY_ID,
+        secretAccessKey: S3_SECRET_ACCESS_KEY,
+        bucket: S3_BUCKET,
+    }
+}
+
 const HttpConfig = () => {
     const {
         PORT = 3000,
@@ -40,6 +56,7 @@ const HttpConfig = () => {
             publicAccess: PUBLIC_ACCESS,
         },
         port: PORT,
+        s3: S3Config(),
     }
 }
 
