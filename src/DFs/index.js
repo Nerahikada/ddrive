@@ -2,7 +2,6 @@
 const https = require('https')
 const crypto = require('crypto')
 const { REST } = require('@discordjs/rest')
-const _ = require('lodash')
 const uuid = require('uuid').v4
 const AsyncStreamProcessorWithConcurrency = require('./lib/AsyncStreamProcessorWithConcurrency')
 const AsyncStreamProcessor = require('./lib/AsyncStreamProcessor')
@@ -29,14 +28,14 @@ class DiscordFileSystem {
         if (!this.webhooks) throw new Error('webhooks parameter is missing')
         if (!this.webhooks.length) throw new Error('At least 1 valid webhookURL required')
 
-        if (!_.isFinite(this.chunkSize)
+        if (!Number.isFinite(this.chunkSize)
             || this.chunkSize < 1
             || this.chunkSize > 10485760) {
             throw new Error('Invalid chunkSize - chunkSize should be valid number and > 1 and < 10485760')
         }
 
         const { timeout } = opts.restOpts
-        if (!_.isFinite(timeout) || timeout < 1) {
+        if (!Number.isFinite(timeout) || timeout < 1) {
             throw new Error('Invalid timeout - timeout should be valid number and > 0')
         }
     }
@@ -44,6 +43,7 @@ class DiscordFileSystem {
     static parseWebhookURL(url) {
         const match = url.match(/webhooks\/(\d+)\/([A-Za-z0-9_-]+)/)
         if (!match) throw new Error(`Invalid webhook URL: ${url}`)
+
         return { id: match[1], token: match[2] }
     }
 
@@ -54,6 +54,7 @@ class DiscordFileSystem {
             if (!ex) return false
             const expiresAt = parseInt(ex, 16)
             const now = Math.floor(Date.now() / 1000)
+
             return now >= expiresAt - 300
         } catch {
             return false
@@ -110,6 +111,7 @@ class DiscordFileSystem {
         const apiPath = rawURL.replace('https://discord.com/api', '')
         const { id: webhookId, token: webhookToken } = DiscordFileSystem.parseWebhookURL(rawURL)
         const response = await this.rest.post(apiPath, { files: [file], auth: false })
+
         return { response, webhookId, webhookToken }
     }
 
@@ -126,6 +128,7 @@ class DiscordFileSystem {
         if (!message.attachments || !message.attachments.length) {
             throw new Error(`No attachments found in message ${messageId}`)
         }
+
         return message.attachments[0].url
     }
 
@@ -195,8 +198,12 @@ class DiscordFileSystem {
             const { attachments: [attachment] } = response
             // Push part object into array and return later
             parts[chunkCount] = {
-                url: attachment.url, size: attachment.size, iv,
-                messageId: response.id, webhookId, webhookToken,
+                url: attachment.url,
+                size: attachment.size,
+                iv,
+                messageId: response.id,
+                webhookId,
+                webhookToken,
             }
         }
 
