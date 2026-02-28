@@ -1,7 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 require('dotenv').config({ path: './config/.env' })
-const _ = require('lodash')
 
 // Valid public access mode
 const VALID_PUBLIC_ACCESS = ['READ_ONLY_FILE', 'READ_ONLY_PANEL']
@@ -62,16 +61,16 @@ const DFsConfig = () => {
     }
     // If chunkSize is invalid set the default chunkSize
     let chunkSize = parseInt(CHUNK_SIZE, 10)
-    if (!_.isFinite(chunkSize)
+    if (!Number.isFinite(chunkSize)
         || chunkSize < 1
         || chunkSize > 10485760) chunkSize = 10165824 // ~10 MB
 
     // Set proper request timeout
     let timeout = parseInt(REQUEST_TIMEOUT, 10)
-    if (!_.isFinite(timeout) || timeout < 1) timeout = 60000
+    if (!Number.isFinite(timeout) || timeout < 1) timeout = 60000
 
     let maxConcurrency = parseInt(UPLOAD_CONCURRENCY, 10)
-    if (!_.isFinite(maxConcurrency) || maxConcurrency < 1) maxConcurrency = 3
+    if (!Number.isFinite(maxConcurrency) || maxConcurrency < 1) maxConcurrency = 3
 
     return {
         chunkSize,
