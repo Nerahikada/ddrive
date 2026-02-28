@@ -9,7 +9,6 @@ const getRoot = async () => knex('directory').whereNull('parentId').first()
  * Resolve an S3 key to a file or directory record by traversing the directory hierarchy.
  * Returns the record or null if not found.
  */
-/* eslint-disable no-await-in-loop, no-restricted-syntax */
 const resolveKey = async (key) => {
     if (!key) return getRoot()
 
@@ -75,7 +74,6 @@ const buildKeyPath = async (record) => {
 
     return parts.join('/')
 }
-/* eslint-enable no-await-in-loop, no-restricted-syntax */
 
 /**
  * List objects under a prefix for ListObjectsV2.
@@ -146,8 +144,6 @@ const listByPrefix = async (prefix, delimiter, maxKeys, continuationToken, start
     const items = sliced.slice(0, maxKeys)
 
     const basePath = prefixPath.endsWith('/') || !prefixPath ? prefixPath : `${prefixPath}/`
-
-    /* eslint-disable no-await-in-loop, no-restricted-syntax */
     for (const child of items) {
         if (child.type === 'directory') {
             if (delimiter) {
@@ -167,7 +163,6 @@ const listByPrefix = async (prefix, delimiter, maxKeys, continuationToken, start
             })
         }
     }
-    /* eslint-enable no-await-in-loop, no-restricted-syntax */
 
     return {
         contents,
@@ -184,5 +179,4 @@ module.exports = {
     resolveOrCreateParentPath,
     buildKeyPath,
     listByPrefix,
-    getRoot,
 }

@@ -48,8 +48,8 @@ module.exports = (dfs, opts) => {
             const errorToLog = error.rawError || error
             errorToLog.reqId = request.id
             this.log.error(errorToLog)
-            error.statusCode = 500 // eslint-disable-line no-param-reassign
-            error.message = 'Internal server error' // eslint-disable-line no-param-reassign
+            error.statusCode = 500
+            error.message = 'Internal server error'
         }
         reply.status(error.statusCode).send({ id: request.id, message: error.message })
     })

@@ -23,23 +23,20 @@ module.exports = async (req, reply) => {
     const key = req.params['*']
     if (!key) {
         sendS3Error(reply, 'InvalidArgument', 'Object key is required.')
-
-        return undefined
+        return
     }
 
     try {
         const record = await resolveKey(key)
         if (!record || record.type !== 'file') {
             sendS3Error(reply, 'NoSuchKey')
-
-            return undefined
+            return
         }
 
         const file = await db.getFile(record.id, true, true)
         if (!file || !file.parts || !file.parts.length) {
             sendS3Error(reply, 'NoSuchKey')
-
-            return undefined
+            return
         }
 
         const mimeType = mime.lookup(path.extname(file.name)) || 'application/octet-stream'
@@ -66,19 +63,14 @@ module.exports = async (req, reply) => {
             })
             file.parts = rangedParts(file.parts, start, end)
             await req.dfs.read(reply.raw, file.parts)
-
-            return undefined
+            return
         }
 
         reply.hijack()
         reply.raw.writeHead(200, resHeaders)
         await req.dfs.read(reply.raw, file.parts)
-
-        return undefined
     } catch (err) {
         req.log.error(err)
         sendS3Error(reply, 'InternalError')
-
-        return undefined
     }
 }

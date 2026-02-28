@@ -37,12 +37,8 @@ module.exports = async (req, reply, bucket) => {
             .code(200)
             .header('Content-Type', 'application/xml')
             .send(xml)
-
-        return undefined
     } catch (err) {
         req.log.error(err)
         sendS3Error(reply, 'InternalError')
-
-        return undefined
     }
 }

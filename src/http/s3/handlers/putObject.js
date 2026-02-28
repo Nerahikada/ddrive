@@ -6,8 +6,7 @@ module.exports = async (req, reply) => {
     const key = req.params['*']
     if (!key) {
         sendS3Error(reply, 'InvalidArgument', 'Object key is required.')
-
-        return undefined
+        return
     }
 
     try {
@@ -15,8 +14,7 @@ module.exports = async (req, reply) => {
         const resolved = await resolveOrCreateParentPath(key)
         if (!resolved) {
             sendS3Error(reply, 'InternalError', 'Could not resolve path.')
-
-            return undefined
+            return
         }
 
         const { parentDirectory, fileName } = resolved
@@ -38,12 +36,8 @@ module.exports = async (req, reply) => {
             .code(200)
             .header('ETag', `"${file.id}"`)
             .send('')
-
-        return undefined
     } catch (err) {
         req.log.error(err)
         sendS3Error(reply, 'InternalError')
-
-        return undefined
     }
 }

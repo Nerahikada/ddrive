@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax,no-await-in-loop */
 const https = require('https')
 const crypto = require('crypto')
 const { REST } = require('@discordjs/rest')
@@ -145,7 +144,7 @@ class DiscordFileSystem {
                 try {
                     url = await this.refreshURL(part.webhookId, part.webhookToken, part.messageId)
                 } catch (err) {
-                    throw new Error(`Failed to refresh expired URL for message ${part.messageId}: ${err.message}`)
+                    throw new Error(`Failed to refresh expired URL for message ${part.messageId}: ${err.message}`, { cause: err })
                 }
             }
             let headers = {}

@@ -156,4 +156,4 @@ const verifySignature = ({
     }
 }
 
-module.exports = { verifySignature, parseAuthHeader }
+module.exports = { verifySignature }

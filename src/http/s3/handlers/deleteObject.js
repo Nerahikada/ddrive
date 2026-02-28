@@ -5,8 +5,7 @@ module.exports = async (req, reply) => {
     const key = req.params['*']
     if (!key) {
         reply.code(204).send('')
-
-        return undefined
+        return
     }
 
     try {
@@ -20,6 +19,4 @@ module.exports = async (req, reply) => {
         req.log.error(err)
         reply.code(204).send('')
     }
-
-    return undefined
 }

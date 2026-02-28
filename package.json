@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "node bin/ddrive",
-    "lint": "eslint --ext mjs,js,ts . --ignore-pattern 'src/http/html'",
+    "lint": "eslint .",
     "migration:latest": "knex migrate:latest",
     "migration:up": "knex migrate:up",
     "migration:down": "knex migrate:down",
@@ -22,15 +22,6 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "devDependencies": {
-    "@forscht/eslint-config": "latest"
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true
-    },
-    "extends": "@forscht"
   },
   "dependencies": {
     "@discordjs/rest": "^1.0.0",
@@ -52,5 +43,10 @@
     "http server",
     "discord file system",
     "discord storage"
-  ]
+  ],
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.2",
+    "globals": "^17.3.0"
+  }
 }

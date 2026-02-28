@@ -37,11 +37,7 @@ module.exports = function s3Routes(fastify, opts, done) {
 
         if (!valid) {
             sendS3Error(reply, 'SignatureDoesNotMatch')
-
-            return undefined
         }
-
-        return undefined
     })
 
     // HEAD /{bucket} — bucket existence check
