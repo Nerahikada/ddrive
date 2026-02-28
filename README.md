@@ -94,5 +94,3 @@ aws --endpoint-url http://localhost:3000 s3 ls s3://ddrive/
 aws --endpoint-url http://localhost:3000 s3 cp s3://ddrive/myfile.txt downloaded.txt
 aws --endpoint-url http://localhost:3000 s3 rm s3://ddrive/myfile.txt
 ```
-
-Feel free to create [new issue](https://github.com/forscht/ddrive/issues/new) if it's not working for you or need any help.
