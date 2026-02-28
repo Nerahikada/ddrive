@@ -44,6 +44,15 @@ All uploads and downloads are proxied through the ddrive server. This means your
    ```
 5. Navigate to `http://localhost:3000` in your browser.
 
+### Webhook URLs via file
+
+Instead of setting the `WEBHOOKS` env var, you can list webhook URLs in a `webhook.txt` file at the project root (one URL per line). If this file exists, it takes priority over the `WEBHOOKS` env var.
+
+```
+https://discord.com/api/webhooks/1234567890/abcdef...
+https://discord.com/api/webhooks/0987654321/fedcba...
+```
+
 ### Config variables explanation
 ```shell
 # config/.env
