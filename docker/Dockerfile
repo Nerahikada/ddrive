@@ -1,28 +1,9 @@
-FROM node:16-alpine
-
-# Set node env
-ENV NODE_ENV production
-
-# Set WORKDIR
+FROM node:22-alpine
 WORKDIR /app
-
-# Copy project files
-COPY --chown=node:node . /app
-
-# NPM Update
-RUN npm update -g npm
-
-# Install packages
-RUN npm install
-
-# Copy entrypoint
-# to be able to pass process argv
-COPY docker/entrypoint /
-
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
+COPY docker/entrypoint /entrypoint
 RUN chmod +x /entrypoint
-
-# Set user as node
 USER node
-
-# Start app
 ENTRYPOINT ["/entrypoint"]

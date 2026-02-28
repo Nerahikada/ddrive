@@ -24,7 +24,7 @@
   },
   "bin": {},
   "engines": {
-    "node": "16.x"
+    "node": ">=22"
   },
   "devDependencies": {
     "@forscht/eslint-config": "latest"
