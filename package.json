@@ -38,7 +38,7 @@
     "@fastify/auth": "^4.2.0",
     "@fastify/multipart": "^7.3.0",
     "@fastify/static": "^6.6.0",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.6.1",
     "fastify": "^4.11.0",
     "knex": "^2.4.0",
     "mime-types": "^2.1.35",
