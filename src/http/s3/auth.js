@@ -96,34 +96,96 @@ const deriveSigningKey = (secretKey, date, region, service) => {
 }
 
 /**
+ * Parse presigned URL query parameters
+ * Format: X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=key/date/region/s3/aws4_request&...
+ */
+const parsePresignedAuth = (query) => {
+    if (!query) return null
+
+    const params = typeof query === 'string' ? new URLSearchParams(query) : query
+    const algorithm = params.get('X-Amz-Algorithm')
+    if (algorithm !== 'AWS4-HMAC-SHA256') return null
+
+    const credential = params.get('X-Amz-Credential')
+    const date = params.get('X-Amz-Date')
+    const expires = params.get('X-Amz-Expires')
+    const signedHeaders = params.get('X-Amz-SignedHeaders')
+    const signature = params.get('X-Amz-Signature')
+
+    if (!credential || !date || !expires || !signedHeaders || !signature) return null
+
+    const credParts = credential.split('/')
+    if (credParts.length !== 5) return null
+
+    return {
+        accessKeyId: credParts[0],
+        date: credParts[1],
+        region: credParts[2],
+        service: credParts[3],
+        signedHeaders: signedHeaders.split(';'),
+        signature,
+        amzDate: date,
+        expires: parseInt(expires, 10),
+    }
+}
+
+/**
+ * Parse ISO 8601 basic format date (e.g. 20260301T120000Z) into epoch ms
+ */
+const parseAmzDate = (amzDate) => {
+    const year = amzDate.slice(0, 4)
+    const month = amzDate.slice(4, 6)
+    const day = amzDate.slice(6, 8)
+    const hour = amzDate.slice(9, 11)
+    const min = amzDate.slice(11, 13)
+    const sec = amzDate.slice(13, 15)
+
+    return new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}Z`).getTime()
+}
+
+/**
  * Verify AWS Signature V4
+ * Supports both Authorization header and presigned URL (query parameter) authentication.
  * Returns true if signature is valid, false otherwise
  */
 const verifySignature = ({
     method, path, query, headers, accessKeyId, secretAccessKey,
 }) => {
-    const auth = parseAuthHeader(headers.authorization)
+    const headerAuth = parseAuthHeader(headers.authorization)
+    const presignedAuth = headerAuth ? null : parsePresignedAuth(query)
+    const auth = headerAuth || presignedAuth
     if (!auth) return false
+
+    const isPresigned = !headerAuth
 
     // Verify access key
     if (auth.accessKeyId !== accessKeyId) return false
 
-    // Validate time skew (±15 minutes)
-    const amzDate = headers['x-amz-date']
+    // Determine X-Amz-Date
+    const amzDate = isPresigned ? auth.amzDate : headers['x-amz-date']
+
     if (amzDate) {
-        const year = amzDate.slice(0, 4)
-        const month = amzDate.slice(4, 6)
-        const day = amzDate.slice(6, 8)
-        const hour = amzDate.slice(9, 11)
-        const min = amzDate.slice(11, 13)
-        const sec = amzDate.slice(13, 15)
-        const requestTime = new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}Z`).getTime()
-        const skew = Math.abs(Date.now() - requestTime)
-        if (Number.isNaN(requestTime) || skew > 900000) return false // 15 minutes
+        const requestTime = parseAmzDate(amzDate)
+        if (Number.isNaN(requestTime)) return false
+
+        if (isPresigned) {
+            // Presigned: no clock-skew check (AWS docs: time skew validation
+            // "applies only to authenticated requests that do not use query
+            // string authentication"). Only check expiration + max 7 days.
+            if (auth.expires > 604800) return false // max 7 days
+            const expiresAt = requestTime + auth.expires * 1000
+            if (Date.now() > expiresAt) return false
+        } else {
+            // Header auth: validate time skew (±15 minutes)
+            const skew = Math.abs(Date.now() - requestTime)
+            if (skew > 900000) return false
+        }
     }
 
-    // Get payload hash - accept UNSIGNED-PAYLOAD for streaming uploads
-    const payloadHash = headers['x-amz-content-sha256'] || 'UNSIGNED-PAYLOAD'
+    // Presigned URLs always use UNSIGNED-PAYLOAD
+    const payloadHash = isPresigned
+        ? 'UNSIGNED-PAYLOAD'
+        : (headers['x-amz-content-sha256'] || 'UNSIGNED-PAYLOAD')
 
     // Build canonical request
     const canonicalRequest = buildCanonicalRequest(
@@ -134,7 +196,7 @@ const verifySignature = ({
     const scope = `${auth.date}/${auth.region}/${auth.service}/aws4_request`
     const stringToSign = [
         'AWS4-HMAC-SHA256',
-        headers['x-amz-date'] || '',
+        amzDate || '',
         scope,
         sha256Hex(canonicalRequest),
     ].join('\n')
