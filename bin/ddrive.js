@@ -14,7 +14,6 @@ const startApp = async () => {
     const shutdown = async () => {
         await httpServer.close()
         await knex.destroy()
-        process.exit(0)
     }
 
     process.on('SIGTERM', shutdown)
