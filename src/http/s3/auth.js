@@ -130,17 +130,25 @@ const parsePresignedAuth = (query) => {
 }
 
 /**
- * Parse ISO 8601 basic format date (e.g. 20260301T120000Z) into epoch ms
+ * Parse a date string into epoch ms.
+ * Supports ISO 8601 basic format (e.g. 20260301T120000Z) used by x-amz-date,
+ * and RFC 7231 / RFC 2822 formats (e.g. "Mon, 01 Mar 2026 12:00:00 GMT") used by Date header.
  */
-const parseAmzDate = (amzDate) => {
-    const year = amzDate.slice(0, 4)
-    const month = amzDate.slice(4, 6)
-    const day = amzDate.slice(6, 8)
-    const hour = amzDate.slice(9, 11)
-    const min = amzDate.slice(11, 13)
-    const sec = amzDate.slice(13, 15)
+const parseAmzDate = (dateStr) => {
+    // ISO 8601 basic format: 20260301T120000Z (exactly 16 chars, 'T' at index 8)
+    if (dateStr.length >= 16 && dateStr[8] === 'T') {
+        const year = dateStr.slice(0, 4)
+        const month = dateStr.slice(4, 6)
+        const day = dateStr.slice(6, 8)
+        const hour = dateStr.slice(9, 11)
+        const min = dateStr.slice(11, 13)
+        const sec = dateStr.slice(13, 15)
 
-    return new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}Z`).getTime()
+        return new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}Z`).getTime()
+    }
+
+    // Fallback: RFC 7231 / RFC 2822 (Date header)
+    return new Date(dateStr).getTime()
 }
 
 /**
@@ -161,25 +169,26 @@ const verifySignature = ({
     // Verify access key
     if (auth.accessKeyId !== accessKeyId) return false
 
-    // Determine X-Amz-Date
-    const amzDate = isPresigned ? auth.amzDate : headers['x-amz-date']
+    // Determine X-Amz-Date (header auth falls back to Date header per AWS spec)
+    const amzDate = isPresigned
+        ? auth.amzDate
+        : (headers['x-amz-date'] || headers.date)
+    if (!amzDate) return false
 
-    if (amzDate) {
-        const requestTime = parseAmzDate(amzDate)
-        if (Number.isNaN(requestTime)) return false
+    const requestTime = parseAmzDate(amzDate)
+    if (Number.isNaN(requestTime)) return false
 
-        if (isPresigned) {
-            // Presigned: no clock-skew check (AWS docs: time skew validation
-            // "applies only to authenticated requests that do not use query
-            // string authentication"). Only check expiration + max 7 days.
-            if (auth.expires > 604800) return false // max 7 days
-            const expiresAt = requestTime + auth.expires * 1000
-            if (Date.now() > expiresAt) return false
-        } else {
-            // Header auth: validate time skew (±15 minutes)
-            const skew = Math.abs(Date.now() - requestTime)
-            if (skew > 900000) return false
-        }
+    if (isPresigned) {
+        // Presigned: no clock-skew check (AWS docs: time skew validation
+        // "applies only to authenticated requests that do not use query
+        // string authentication"). Only check expiration + max 7 days.
+        if (auth.expires > 604800) return false // max 7 days
+        const expiresAt = requestTime + auth.expires * 1000
+        if (Date.now() > expiresAt) return false
+    } else {
+        // Header auth: validate time skew (±15 minutes)
+        const skew = Math.abs(Date.now() - requestTime)
+        if (skew > 900000) return false
     }
 
     // Presigned URLs always use UNSIGNED-PAYLOAD
