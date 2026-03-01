@@ -4,6 +4,7 @@ const FastifyStatic = require('@fastify/static')
 const FastifyMultipart = require('@fastify/multipart')
 const FastifyAuth = require('@fastify/auth')
 
+const knex = require('./api/utils/knex')
 const commonSchemas = require('./api/constants/commonSchemas')
 const directoryRoutes = require('./api/routes/directory/routes')
 const fileRoutes = require('./api/routes/file/routes')
@@ -16,6 +17,12 @@ module.exports = (dfs, opts) => {
 
     // Load common schemas
     commonSchemas.forEach((schema) => fastify.addSchema(schema))
+
+    // Health check (unauthenticated, verifies DB connectivity)
+    fastify.get('/healthz', async () => {
+        await knex.raw('SELECT 1')
+        return { status: 'ok' }
+    })
 
     // Enable Multipart upload
     fastify.register(FastifyMultipart, { limits: { fileSize: Infinity } })
