@@ -14,13 +14,13 @@ module.exports = async (req, reply) => {
     try {
         const record = await resolveKey(key)
         if (!record || record.type !== 'file') {
-            sendS3Error(reply, 'NoSuchKey')
+            sendS3Error(reply, 'NoSuchKey', undefined, `/${key}`)
             return
         }
 
         const file = await db.getFile(record.id, true, false)
         if (!file) {
-            sendS3Error(reply, 'NoSuchKey')
+            sendS3Error(reply, 'NoSuchKey', undefined, `/${key}`)
             return
         }
 

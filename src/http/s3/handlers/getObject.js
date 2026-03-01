@@ -10,8 +10,8 @@ const { rangeParser } = require('../../api/utils/Util')
  */
 const rangedParts = (parts, start, end) => {
     const chunkSize = parts[0].size
-    const startPartNumber = Math.ceil(start / chunkSize) ? Math.ceil(start / chunkSize) - 1 : 0
-    const endPartNumber = Math.ceil(end / chunkSize)
+    const startPartNumber = Math.floor(start / chunkSize)
+    const endPartNumber = Math.floor(end / chunkSize) + 1
     const partsToDownload = parts.slice(startPartNumber, endPartNumber)
     partsToDownload[0].start = start % chunkSize
     partsToDownload[partsToDownload.length - 1].end = end % chunkSize
@@ -29,13 +29,13 @@ module.exports = async (req, reply) => {
     try {
         const record = await resolveKey(key)
         if (!record || record.type !== 'file') {
-            sendS3Error(reply, 'NoSuchKey')
+            sendS3Error(reply, 'NoSuchKey', undefined, `/${key}`)
             return
         }
 
         const file = await db.getFile(record.id, true, true)
         if (!file || !file.parts || !file.parts.length) {
-            sendS3Error(reply, 'NoSuchKey')
+            sendS3Error(reply, 'NoSuchKey', undefined, `/${key}`)
             return
         }
 

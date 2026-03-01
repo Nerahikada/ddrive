@@ -61,7 +61,7 @@ const buildCanonicalRequest = (method, uri, query, headers, signedHeaders, paylo
         const params = typeof query === 'string' ? new URLSearchParams(query) : query
         const sorted = Array.from(params)
             .filter(([k]) => k !== 'X-Amz-Signature')
-            .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+            .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0))
         sorted.forEach(([k, v]) => {
             queryPairs.push(`${encodeRfc3986(k)}=${encodeRfc3986(v)}`)
         })
@@ -130,6 +130,24 @@ const parsePresignedAuth = (query) => {
 }
 
 /**
+ * Convert a date string to ISO 8601 basic format (YYYYMMDDTHHMMSSZ).
+ * If already in that format, returns as-is.
+ * If in RFC 7231 / RFC 2822 (Date header), converts to ISO 8601 basic.
+ */
+const toAmzDateFormat = (dateStr) => {
+    // Already ISO 8601 basic format: 20260301T120000Z
+    if (dateStr.length >= 16 && dateStr[8] === 'T') {
+        return dateStr
+    }
+
+    // RFC 7231 / RFC 2822 → ISO 8601 basic
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return null
+
+    return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+}
+
+/**
  * Parse a date string into epoch ms.
  * Supports ISO 8601 basic format (e.g. 20260301T120000Z) used by x-amz-date,
  * and RFC 7231 / RFC 2822 formats (e.g. "Mon, 01 Mar 2026 12:00:00 GMT") used by Date header.
@@ -170,9 +188,14 @@ const verifySignature = ({
     if (auth.accessKeyId !== accessKeyId) return false
 
     // Determine X-Amz-Date (header auth falls back to Date header per AWS spec)
-    const amzDate = isPresigned
+    // StringToSign requires ISO 8601 basic format (YYYYMMDDTHHMMSSZ), so convert
+    // RFC 7231 Date headers to that format.
+    const rawDate = isPresigned
         ? auth.amzDate
         : (headers['x-amz-date'] || headers.date)
+    if (!rawDate) return false
+
+    const amzDate = toAmzDateFormat(rawDate)
     if (!amzDate) return false
 
     const requestTime = parseAmzDate(amzDate)

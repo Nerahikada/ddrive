@@ -1,3 +1,5 @@
+const crypto = require('crypto')
+const { Transform } = require('stream')
 const db = require('../../api/services/database')
 const { resolveOrCreateParentPath, resolveKey } = require('../pathResolver')
 const { sendS3Error } = require('../errors')
@@ -25,8 +27,35 @@ module.exports = async (req, reply) => {
             await db.deleteDirectory(existing.id, 'file')
         }
 
-        // Upload stream to Discord (req.body is the passthrough stream from content parser)
-        const parts = await req.dfs.write(req.body)
+        // If Content-MD5 is provided, wrap stream to compute hash while uploading
+        const contentMd5 = req.headers['content-md5']
+        let bodyStream = req.body
+        let md5Transform = null
+
+        if (contentMd5) {
+            md5Transform = new Transform({
+                transform(chunk, encoding, cb) {
+                    this.hash.update(chunk)
+                    this.push(chunk)
+                    cb()
+                },
+            })
+            md5Transform.hash = crypto.createHash('md5')
+            bodyStream = req.body.pipe(md5Transform)
+        }
+
+        // Upload stream to Discord
+        const parts = await req.dfs.write(bodyStream)
+
+        // Verify Content-MD5 if provided
+        if (md5Transform) {
+            const computed = md5Transform.hash.digest('base64')
+            if (computed !== contentMd5) {
+                await req.dfs.deleteParts(parts)
+                sendS3Error(reply, 'BadDigest')
+                return
+            }
+        }
 
         // Create file record in DB
         const fileData = { name: fileName, parentId: parentDirectory.id, type: 'file' }

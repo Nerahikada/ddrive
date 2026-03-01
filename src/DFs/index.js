@@ -132,6 +132,23 @@ class DiscordFileSystem {
     }
 
     /**
+     * @description Delete uploaded parts (webhook messages) from Discord
+     * @param parts {Array}
+     * @returns {Promise<void>}
+     */
+    async deleteParts(parts) {
+        for (const part of parts) {
+            if (!part.messageId || !part.webhookId || !part.webhookToken) continue
+            try {
+                const path = `/webhooks/${part.webhookId}/${part.webhookToken}/messages/${part.messageId}`
+                await this.rest.delete(path, { auth: false })
+            } catch {
+                // Best-effort cleanup — log nothing, move on
+            }
+        }
+    }
+
+    /**
      * @description Read files from discord and write it to stream
      * @param stream
      * @param parts {Array}

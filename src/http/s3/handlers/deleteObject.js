@@ -1,5 +1,6 @@
 const db = require('../../api/services/database')
 const { resolveKey } = require('../pathResolver')
+const { sendS3Error } = require('../errors')
 
 module.exports = async (req, reply) => {
     const key = req.params['*']
@@ -17,6 +18,6 @@ module.exports = async (req, reply) => {
         reply.code(204).send('')
     } catch (err) {
         req.log.error(err)
-        reply.code(204).send('')
+        sendS3Error(reply, 'InternalError')
     }
 }
