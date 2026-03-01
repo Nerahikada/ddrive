@@ -13,11 +13,17 @@ const S3_ERRORS = {
     InternalError: { status: 500, message: 'We encountered an internal error. Please try again.' },
 }
 
+const escapeXml = (str) => String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+
 const errorXml = (code, message, requestId, resource) => `${XML_HEADER}
 <Error>
   <Code>${code}</Code>
-  <Message>${message || S3_ERRORS[code]?.message || 'Unknown error'}</Message>
-  ${resource ? `<Resource>${resource}</Resource>` : ''}
+  <Message>${escapeXml(message || S3_ERRORS[code]?.message || 'Unknown error')}</Message>
+  ${resource ? `<Resource>${escapeXml(resource)}</Resource>` : ''}
   <RequestId>${requestId}</RequestId>
 </Error>`
 

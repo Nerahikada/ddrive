@@ -6,6 +6,20 @@ const escapeXml = (str) => String(str)
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 
+const unescapeXml = (str) => String(str)
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&#x22;/gi, '"')
+    .replace(/&gt;/g, '>')
+    .replace(/&#62;/g, '>')
+    .replace(/&#x3e;/gi, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&#60;/g, '<')
+    .replace(/&#x3c;/gi, '<')
+    .replace(/&amp;/g, '&')
+    .replace(/&#38;/g, '&')
+    .replace(/&#x26;/gi, '&')
+
 const listObjectsV2Response = ({
     name, prefix, delimiter, maxKeys, keyCount,
     isTruncated, contents, commonPrefixes, continuationToken, nextContinuationToken,
@@ -33,4 +47,4 @@ const listObjectsV2Response = ({
   </CommonPrefixes>`).join('\n  ')}
 </ListBucketResult>`
 
-module.exports = { escapeXml, listObjectsV2Response }
+module.exports = { escapeXml, unescapeXml, listObjectsV2Response }

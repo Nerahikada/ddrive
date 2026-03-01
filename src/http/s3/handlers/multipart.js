@@ -2,7 +2,7 @@ const crypto = require('crypto')
 const db = require('../../api/services/database')
 const { resolveOrCreateParentPath, resolveKey } = require('../pathResolver')
 const { sendS3Error } = require('../errors')
-const { escapeXml } = require('../xml')
+const { escapeXml, unescapeXml } = require('../xml')
 
 // In-memory store for in-flight multipart uploads
 const uploads = new Map()
@@ -109,9 +109,11 @@ async function completeMultipartUpload(req, reply, bucket) {
         while ((match = partRegex.exec(xml)) !== null) {
             const inner = match[1]
             const numMatch = inner.match(/<PartNumber>(\d+)<\/PartNumber>/)
-            const etagMatch = inner.match(/<ETag>"?([^"<]+)"?<\/ETag>/)
+            const etagMatch = inner.match(/<ETag>([^<]+)<\/ETag>/)
             if (numMatch && etagMatch) {
-                requestedParts.push({ num: parseInt(numMatch[1], 10), etag: etagMatch[1] })
+                // Decode XML entities (&#34; → ") then strip surrounding quotes
+                const rawEtag = unescapeXml(etagMatch[1]).replace(/^"|"$/g, '')
+                requestedParts.push({ num: parseInt(numMatch[1], 10), etag: rawEtag })
             }
         }
 
@@ -179,7 +181,20 @@ async function completeMultipartUpload(req, reply, bucket) {
 async function abortMultipartUpload(req, reply) {
     const { uploadId } = req.query
 
-    // Silently succeed even if the upload doesn't exist (S3 behaviour)
+    // Clean up Discord attachments for uploaded parts (best-effort)
+    const upload = uploads.get(uploadId)
+    if (upload) {
+        try {
+            const allParts = []
+            for (const part of upload.parts.values()) {
+                allParts.push(...part.discordParts)
+            }
+            await req.dfs.deleteParts(allParts)
+        } catch {
+            // Best-effort cleanup — always proceed to delete the upload record
+        }
+    }
+
     uploads.delete(uploadId)
     reply.code(204).send('')
 }
