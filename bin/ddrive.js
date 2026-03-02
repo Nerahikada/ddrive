@@ -9,7 +9,7 @@ const startApp = async () => {
     // Create http Server instance
     const httpServer = HttpServer(dfs, httpConfig)
 
-    await httpServer.listen({ host: '0.0.0.0', port: httpConfig.port })
+    await httpServer.listen({ host: '::', port: httpConfig.port })
 
     const shutdown = async () => {
         await httpServer.close()
