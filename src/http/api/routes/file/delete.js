@@ -22,7 +22,9 @@ module.exports.handler = async (req, reply) => {
     try {
         const parts = await db.getFileParts(fileId)
         await req.dfs.deleteParts(parts)
-    } catch {}
+    } catch (err) {
+        req.log.warn(err, 'Discord cleanup failed for file %s', fileId)
+    }
     await db.deleteDirectory(fileId, 'file')
     reply.code(HTTP_CODE.NO_CONTENT)
 }

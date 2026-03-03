@@ -15,7 +15,9 @@ module.exports = async (req, reply) => {
             try {
                 const parts = await db.getFileParts(record.id)
                 await req.dfs.deleteParts(parts)
-            } catch {}
+            } catch (err) {
+                req.log.warn(err, 'Discord cleanup failed for key %s', key)
+            }
             await db.deleteDirectory(record.id, 'file')
         }
         // S3 always returns 204, even if key doesn't exist (idempotent)

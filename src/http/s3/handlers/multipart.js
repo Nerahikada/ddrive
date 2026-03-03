@@ -152,7 +152,9 @@ async function completeMultipartUpload(req, reply, bucket) {
             try {
                 const existingParts = await db.getFileParts(existing.id)
                 await req.dfs.deleteParts(existingParts)
-            } catch {}
+            } catch (err) {
+                req.log.warn(err, 'Discord cleanup failed for overwritten key %s', key)
+            }
             await db.deleteDirectory(existing.id, 'file')
         }
 
@@ -194,8 +196,8 @@ async function abortMultipartUpload(req, reply) {
                 allParts.push(...part.discordParts)
             }
             await req.dfs.deleteParts(allParts)
-        } catch {
-            // Best-effort cleanup — always proceed to delete the upload record
+        } catch (err) {
+            req.log.warn(err, 'Discord cleanup failed for aborted upload %s', uploadId)
         }
     }
 

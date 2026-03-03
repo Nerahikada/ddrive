@@ -27,7 +27,9 @@ module.exports = async (req, reply) => {
             try {
                 const existingParts = await db.getFileParts(existing.id)
                 await req.dfs.deleteParts(existingParts)
-            } catch {}
+            } catch (err) {
+                req.log.warn(err, 'Discord cleanup failed for overwritten key %s', key)
+            }
             await db.deleteDirectory(existing.id, 'file')
         }
 

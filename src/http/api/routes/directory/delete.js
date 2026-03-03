@@ -17,7 +17,9 @@ module.exports.handler = async (req, reply) => {
     try {
         const parts = await db.getDirectoryParts(directoryId)
         await req.dfs.deleteParts(parts)
-    } catch {}
+    } catch (err) {
+        req.log.warn(err, 'Discord cleanup failed for directory %s', directoryId)
+    }
     await db.deleteDirectory(directoryId)
     reply.code(204)
 }
