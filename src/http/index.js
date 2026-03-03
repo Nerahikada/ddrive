@@ -19,7 +19,7 @@ module.exports = (dfs, opts) => {
     commonSchemas.forEach((schema) => fastify.addSchema(schema))
 
     // Health check (unauthenticated, verifies DB connectivity)
-    fastify.get('/healthz', async () => {
+    fastify.get('/healthz', { logLevel: 'silent' }, async () => {
         await knex.raw('SELECT 1')
         return { status: 'ok' }
     })
