@@ -149,8 +149,10 @@ async function completeMultipartUpload(req, reply, bucket) {
         // Overwrite semantics — delete existing file if present
         const existing = await resolveKey(key)
         if (existing && existing.type === 'file') {
-            const existingParts = await db.getFileParts(existing.id)
-            try { await req.dfs.deleteParts(existingParts) } catch {}
+            try {
+                const existingParts = await db.getFileParts(existing.id)
+                await req.dfs.deleteParts(existingParts)
+            } catch {}
             await db.deleteDirectory(existing.id, 'file')
         }
 

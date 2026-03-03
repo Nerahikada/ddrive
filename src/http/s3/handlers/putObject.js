@@ -24,8 +24,10 @@ module.exports = async (req, reply) => {
         // Check if file already exists - delete it for overwrite semantics
         const existing = await resolveKey(key)
         if (existing && existing.type === 'file') {
-            const existingParts = await db.getFileParts(existing.id)
-            try { await req.dfs.deleteParts(existingParts) } catch {}
+            try {
+                const existingParts = await db.getFileParts(existing.id)
+                await req.dfs.deleteParts(existingParts)
+            } catch {}
             await db.deleteDirectory(existing.id, 'file')
         }
 

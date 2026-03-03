@@ -19,8 +19,10 @@ module.exports.opts = {
 
 module.exports.handler = async (req, reply) => {
     const { fileId } = req.params
-    const parts = await db.getFileParts(fileId)
-    try { await req.dfs.deleteParts(parts) } catch {}
+    try {
+        const parts = await db.getFileParts(fileId)
+        await req.dfs.deleteParts(parts)
+    } catch {}
     await db.deleteDirectory(fileId, 'file')
     reply.code(HTTP_CODE.NO_CONTENT)
 }

@@ -14,8 +14,10 @@ module.exports.opts = {
 
 module.exports.handler = async (req, reply) => {
     const { directoryId } = req.params
-    const parts = await db.getDirectoryParts(directoryId)
-    try { await req.dfs.deleteParts(parts) } catch {}
+    try {
+        const parts = await db.getDirectoryParts(directoryId)
+        await req.dfs.deleteParts(parts)
+    } catch {}
     await db.deleteDirectory(directoryId)
     reply.code(204)
 }

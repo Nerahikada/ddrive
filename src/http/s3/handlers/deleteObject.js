@@ -12,8 +12,10 @@ module.exports = async (req, reply) => {
     try {
         const record = await resolveKey(key)
         if (record && record.type === 'file') {
-            const parts = await db.getFileParts(record.id)
-            try { await req.dfs.deleteParts(parts) } catch {}
+            try {
+                const parts = await db.getFileParts(record.id)
+                await req.dfs.deleteParts(parts)
+            } catch {}
             await db.deleteDirectory(record.id, 'file')
         }
         // S3 always returns 204, even if key doesn't exist (idempotent)
