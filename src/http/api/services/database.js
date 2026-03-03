@@ -132,6 +132,35 @@ const createFileWithParts = async (data, parts) => {
     return getFile(file.id, true, false)
 }
 
+/**
+ * Return the Discord block metadata for a single file (used before deletion)
+ * @param fileId {String}
+ * @returns {Promise<Array>}
+ */
+const getFileParts = (fileId) =>
+    knex('block')
+        .where({ fileId })
+        .select('messageId', 'webhookId', 'webhookToken')
+
+/**
+ * Recursively collect Discord block metadata for all files under a directory
+ * @param directoryId {String}
+ * @returns {Promise<Array>}
+ */
+const getDirectoryParts = (directoryId) =>
+    knex.raw(
+        `WITH RECURSIVE descendants AS (
+            SELECT id FROM directory WHERE id = ?
+            UNION ALL
+            SELECT d.id FROM directory d JOIN descendants anc ON d."parentId" = anc.id
+        )
+        SELECT b."messageId", b."webhookId", b."webhookToken"
+        FROM block b
+        WHERE b."fileId" IN (SELECT id FROM descendants)`,
+        [directoryId],
+    ).then((r) => r.rows)
+
 module.exports = {
     getFile, getDirectory, createDirectoryOrFile, deleteDirectory, updateDirectoryOrFile, createFileWithParts,
+    getFileParts, getDirectoryParts,
 }
