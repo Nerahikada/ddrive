@@ -6,7 +6,7 @@ const AsyncStreamProcessorWithConcurrency = require('./lib/AsyncStreamProcessorW
 const AsyncStreamProcessor = require('./lib/AsyncStreamProcessor')
 const StreamChunker = require('./lib/StreamChunker')
 
-const DEFAULT_CHUNK_SIZE = 10165824 // ~10MB
+const DEFAULT_CHUNK_SIZE = 10485248 // 10MiB - 512; Discord limit = 10MiB total request body, multipart overhead = 214-263 bytes
 const DEFAULT_ENCRYPTION = 'aes-256-ctr'
 const DEFAULT_REST_OPTS = { version: 10, timeout: 60000 }
 const DEFAULT_MAX_UPLOAD_CONCURRENCY = 3
