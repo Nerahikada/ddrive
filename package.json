@@ -24,12 +24,12 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@discordjs/rest": "^1.0.0",
-    "@fastify/auth": "^4.2.0",
-    "@fastify/multipart": "^7.3.0",
-    "@fastify/static": "^6.6.0",
+    "@discordjs/rest": "^2.6.0",
+    "@fastify/auth": "^5.0.0",
+    "@fastify/multipart": "^9.4.0",
+    "@fastify/static": "^9.0.0",
     "dotenv": "^16.6.1",
-    "fastify": "^4.11.0",
+    "fastify": "^5.7.0",
     "knex": "^2.4.0",
     "mime-types": "^2.1.35",
     "pg": "^8.8.0",
@@ -44,6 +44,9 @@
     "discord file system",
     "discord storage"
   ],
+  "overrides": {
+    "undici": "6.23.0"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.0.2",

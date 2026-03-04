@@ -58,6 +58,7 @@ module.exports.handler = async (req, reply) => {
     // Handle Partial content request (Resume download)
     //
     const parsedRange = rangeParser(file.size, range)
+    reply.hijack()
     if (range && parsedRange !== -1) {
         const { start, end } = parsedRange
         reply.raw.writeHead(HTTP_CODE.PARTIAL_CONTENT, {

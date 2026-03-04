@@ -25,7 +25,7 @@ module.exports = (dfs, opts) => {
     })
 
     // Enable Multipart upload
-    fastify.register(FastifyMultipart, { limits: { fileSize: Infinity } })
+    fastify.register(FastifyMultipart, { limits: { fileSize: Number.MAX_SAFE_INTEGER } })
 
     // Load Auth and then register the routes
     fastify.decorate('basicAuth', Auth(opts.authOpts))
