@@ -73,7 +73,7 @@ module.exports = function s3Routes(fastify, opts, done) {
     })
 
     // GET /{bucket}/{key+} — GetObject
-    fastify.get('/*', { exposeHeadRoutes: false }, (req, reply) => getObject(req, reply))
+    fastify.get('/*', { exposeHeadRoute: false }, (req, reply) => getObject(req, reply))
 
     // HEAD /{bucket}/{key+} — HeadObject
     fastify.head('/*', (req, reply) => headObject(req, reply))
