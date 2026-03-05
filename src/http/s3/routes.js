@@ -43,7 +43,7 @@ module.exports = function s3Routes(fastify, opts, done) {
         })
 
         if (!valid) {
-            sendS3Error(reply, 'SignatureDoesNotMatch')
+            return sendS3Error(reply, 'SignatureDoesNotMatch')
         }
     })
 
