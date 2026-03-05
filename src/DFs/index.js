@@ -225,7 +225,7 @@ class DiscordFileSystem {
 
         return new Promise((resolve, reject) => {
             stream
-                .on('aborted', () => reject(new Error('file upload aborted'))) // On HTTP request abort delete all the messages and reject promise
+                .on('close', () => { if (!stream.readableEnded) reject(new Error('file upload aborted')) })
                 .pipe(new StreamChunker(this.chunkSize))
                 .pipe(new AsyncStreamProcessorWithConcurrency(processChunk, this.maxUploadConc))
                 .on('finish', () => resolve(parts))
